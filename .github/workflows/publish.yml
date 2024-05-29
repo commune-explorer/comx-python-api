@@ -38,4 +38,4 @@ jobs:
           push: true
           tags: |
             mos4ic/communex-api:${{ steps.get_version.outputs.VERSION }}
-            mos4ic/communex-api:alpha
+            mos4ic/communex-api:latest
