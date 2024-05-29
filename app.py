@@ -3,7 +3,7 @@ from typing import Any, cast
 import uvicorn
 from communex.balance import from_nano, from_horus
 from communex.client import CommuneClient
-from communex.misc import get_map_modules
+from communex.misc import get_map_modules, get_map_subnets_params
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -16,7 +16,35 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/subnet/{netuid}/modules")
+@app.get("/subnets")
+def read_root():
+    client = CommuneClient(node_url)
+
+    subnets = get_map_subnets_params(client)
+    keys, values = subnets.keys(), subnets.values()
+    subnets_with_netuids = [
+        {"netuid": key, **value} for key, value in zip(keys, values)
+    ]
+
+    subnet_stakes = client.query_map_total_stake()
+    subnets_with_stakes = [
+        {"stake": from_nano(subnet_stakes.get(netuid, 0))} for netuid in keys
+    ]
+    subnets_with_stakes = [
+        {**subnets_with_netuids[i], **subnets_with_stakes[i]} for i in range(len(keys))
+    ]
+
+    subnets_with_netuids = sorted(subnets_with_stakes, key=lambda x: x["emission"], reverse=True)
+
+    for subnet_dict in subnets_with_netuids:
+        bonds = subnet_dict["bonds_ma"]
+        if bonds:
+            subnet_dict["bonds_ma"] = str(from_nano(subnet_dict["bonds_ma"])) + " J"
+
+    return {"subnets": subnets_with_netuids}
+
+
+@app.get("/subnets/{netuid}/modules")
 def read_item(netuid: int):
     client = CommuneClient(node_url)
 
