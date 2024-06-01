@@ -13,7 +13,9 @@ POETRY_HOME='/usr/local' \
 POETRY_VERSION=1.8.2
 
 RUN apt-get update && \
-    apt-get install -y git curl python3-pip python3-dev python-is-python3 && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get install -y git curl python3.10 python3-pip python3.10-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://install.python-poetry.org | python3 -
