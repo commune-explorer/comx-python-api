@@ -83,7 +83,7 @@ def read_validating_apr():
     _apr = (daily_token_rewards * (1 - fee_to_float)
             * 365) / total_staked_tokens * 100
 
-    return {"apr": _apr}
+    return {"apr": ceil(_apr)}
 
 @app.get("/daily-emission")
 def read_daily_emission():
