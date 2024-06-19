@@ -5,6 +5,7 @@ from communex.balance import from_nano, from_horus
 from communex.client import CommuneClient
 from communex.misc import get_map_modules, get_map_subnets_params
 from fastapi import FastAPI
+from math import ceil
 
 app = FastAPI()
 
@@ -34,14 +35,25 @@ def read_root():
         {**subnets_with_netuids[i], **subnets_with_stakes[i]} for i in range(len(keys))
     ]
 
-    subnets_with_netuids = sorted(subnets_with_stakes, key=lambda x: x["emission"], reverse=True)
+    subnets_with_netuids = sorted(
+        subnets_with_stakes, key=lambda x: x["emission"], reverse=True)
 
     for subnet_dict in subnets_with_netuids:
         bonds = subnet_dict["bonds_ma"]
         if bonds:
-            subnet_dict["bonds_ma"] = str(from_nano(subnet_dict["bonds_ma"])) + " J"
+            subnet_dict["bonds_ma"] = str(
+                from_nano(subnet_dict["bonds_ma"])) + " J"
 
     return {"subnets": subnets_with_netuids}
+
+
+@app.get("/daily_emission")
+def read_daily_emission():
+    client = CommuneClient(node_url)
+
+    emission = client.get_unit_emission()
+    daily_emission_raw = from_nano(emission * 10_800)  # blocks in a day
+    return {"daily_emission": ceil(daily_emission_raw)}
 
 
 @app.get("/subnets/{netuid}/modules")
@@ -52,16 +64,39 @@ def read_item(netuid: int):
     modules_to_list = [value for _, value in modules_map.items()]
 
     immunity_period = client.get_immunity_period(netuid)
+    tempo = client.get_tempo(netuid)
+
     last_block = client.get_block()["header"]["number"]
 
-    modules: list[Any] = []
+    to_exclude = ["stake_from", "metadata", "last_update", "regblock"]
+    modules = transform_module_into(
+        to_exclude, last_block, immunity_period, modules_to_list, tempo)
 
-    for mod in modules_to_list:
-        module = cast(Any, mod.copy())
+    return {"modules": modules}
 
-        module["in_immunity"] = module["regblock"] + immunity_period > last_block
+
+
+def transform_module_into(
+    to_exclude: List[str], last_block: int,
+    immunity_period: int, modules: List[Any],
+    tempo: int
+) -> List[Any]:
+    mods = cast(List[dict[str, Any]], modules)
+    transformed_modules: List[dict[str, Any]] = []
+    for mod in mods:
+        module = mod.copy()
+        module_regblock = module["regblock"]
+        module["in_immunity"] = module_regblock + immunity_period > last_block
+
+        for key in to_exclude:
+            del module[key]
         module["stake"] = round(from_nano(module["stake"]), 2)
-        module["emission"] = round(from_horus(module["emission"]), 4)
+        module["emission"] = round(
+            from_horus(
+                module["emission"], tempo
+            ),
+            4
+        )
 
         # add type
         module_type = 'validator'
@@ -71,14 +106,10 @@ def read_item(netuid: int):
             module_type = "miner"
         module["type"] = module_type
 
-        # exclude
-        to_exclude = ["stake_from", "metadata", "last_update", "regblock"]
-        for key in to_exclude:
-            del module[key]
+        transformed_modules.append(module)
 
-        modules.append(module)
+    return transformed_modules
 
-    return {"modules": modules}
 
 
 if __name__ == "__main__":
