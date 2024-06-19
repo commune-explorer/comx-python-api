@@ -46,6 +46,44 @@ def read_root():
 
     return {"subnets": subnets_with_netuids}
 
+@app.get("/apr")
+def read_validating_apr():
+    client = CommuneClient(node_url)
+
+    # network parameters
+    block_time = 8  # seconds
+    seconds_in_a_day = 86400
+    blocks_in_a_day = seconds_in_a_day / block_time
+
+    unit_emission = client.get_unit_emission()
+    map_query = client.query_batch_map(
+        {
+            "SubspaceModule": [
+                ("TotalStake", []),
+            ]
+        }
+    )
+
+    standard_query = client.query_batch(
+        {
+            "SubspaceModule": [
+                ("FloorDelegationFee", []),
+            ]
+        }
+    )
+
+    staked = map_query["TotalStake"]
+    fee = standard_query["FloorDelegationFee"]
+    fee_to_float = fee / 100
+
+    total_staked_tokens = from_nano(sum(staked.values()))
+
+    # 50% of the total emission goes to stakers
+    daily_token_rewards = blocks_in_a_day * from_nano(unit_emission) / 2
+    _apr = (daily_token_rewards * (1 - fee_to_float)
+            * 365) / total_staked_tokens * 100
+
+    return {"apr": _apr}
 
 @app.get("/daily-emission")
 def read_daily_emission():
@@ -73,7 +111,6 @@ def read_item(netuid: int):
         to_exclude, last_block, immunity_period, modules_to_list, tempo)
 
     return {"modules": modules}
-
 
 
 def transform_module_into(
@@ -109,7 +146,6 @@ def transform_module_into(
         transformed_modules.append(module)
 
     return transformed_modules
-
 
 
 if __name__ == "__main__":
