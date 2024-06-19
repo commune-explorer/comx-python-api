@@ -77,12 +77,12 @@ def read_item(netuid: int):
 
 
 def transform_module_into(
-    to_exclude: List[str], last_block: int,
-    immunity_period: int, modules: List[Any],
+    to_exclude: list[str], last_block: int,
+    immunity_period: int, modules: list[Any],
     tempo: int
-) -> List[Any]:
-    mods = cast(List[dict[str, Any]], modules)
-    transformed_modules: List[dict[str, Any]] = []
+) -> list[Any]:
+    mods = cast(list[dict[str, Any]], modules)
+    transformed_modules: list[dict[str, Any]] = []
     for mod in mods:
         module = mod.copy()
         module_regblock = module["regblock"]
