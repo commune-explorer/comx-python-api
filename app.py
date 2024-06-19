@@ -47,7 +47,7 @@ def read_root():
     return {"subnets": subnets_with_netuids}
 
 
-@app.get("/daily_emission")
+@app.get("/daily-emission")
 def read_daily_emission():
     client = CommuneClient(node_url)
 
