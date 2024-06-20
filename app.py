@@ -46,6 +46,7 @@ def read_root():
 
     return {"subnets": subnets_with_netuids}
 
+
 @app.get("/apr")
 def read_validating_apr():
     client = CommuneClient(node_url)
@@ -68,12 +69,15 @@ def read_validating_apr():
         {
             "SubspaceModule": [
                 ("FloorDelegationFee", []),
+                ("FloorFounderShare", []),
             ]
         }
     )
 
     staked = map_query["TotalStake"]
-    fee = standard_query["FloorDelegationFee"]
+    delegation_fee = standard_query["FloorDelegationFee"]
+    founder_fee = standard_query["FloorFounderShare"]
+    fee = delegation_fee + founder_fee
     fee_to_float = fee / 100
 
     total_staked_tokens = from_nano(sum(staked.values()))
@@ -84,6 +88,7 @@ def read_validating_apr():
             * 365) / total_staked_tokens * 100
 
     return {"apr": ceil(_apr)}
+
 
 @app.get("/daily-emission")
 def read_daily_emission():
