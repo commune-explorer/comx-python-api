@@ -45,4 +45,4 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Update production container
-        run: cd ../comx-python-api && docker compose pull && docker compose up -d
+        run: cd ../comex-api && docker compose pull && docker compose up -d
