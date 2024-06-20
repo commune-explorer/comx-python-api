@@ -45,4 +45,4 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Update production container
-        run: cd ../comex-api && docker compose pull && docker compose up -d
+        run: pwd #cd ../comex-api && docker compose pull && docker compose up -d
