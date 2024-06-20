@@ -39,3 +39,10 @@ jobs:
           tags: |
             mos4ic/communex-api:${{ steps.get_version.outputs.VERSION }}
             mos4ic/communex-api:latest
+
+  deploy:
+    needs: docker
+    runs-on: self-hosted
+    steps:
+      - name: Update production container
+        run: cd ../comx-python-api && docker compose pull && docker compose up -d
