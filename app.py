@@ -20,23 +20,15 @@ def read_root():
 @app.get("/subnets")
 def read_root():
     client = CommuneClient(node_url)
-
     subnets = get_map_subnets_params(client)
+
     keys, values = subnets.keys(), subnets.values()
-    subnets_with_netuids = [
+    subnets_with_netuids: list[dict[Any, Any]] = [
         {"netuid": key, **value} for key, value in zip(keys, values)
     ]
 
-    subnet_stakes = client.query_map_total_stake()
-    subnets_with_stakes = [
-        {"stake": from_nano(subnet_stakes.get(netuid, 0))} for netuid in keys
-    ]
-    subnets_with_stakes = [
-        {**subnets_with_netuids[i], **subnets_with_stakes[i]} for i in range(len(keys))
-    ]
-
     subnets_with_netuids = sorted(
-        subnets_with_stakes, key=lambda x: x["emission"], reverse=True)
+        subnets_with_netuids, key=lambda x: x["emission"], reverse=True)
 
     for subnet_dict in subnets_with_netuids:
         bonds = subnet_dict["bonds_ma"]
