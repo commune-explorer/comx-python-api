@@ -49,13 +49,6 @@ def read_validating_apr():
     blocks_in_a_day = seconds_in_a_day / block_time
 
     unit_emission = client.get_unit_emission()
-    map_query = client.query_batch_map(
-        {
-            "SubspaceModule": [
-                ("TotalStake", []),
-            ]
-        }
-    )
 
     standard_query = client.query_batch(
         {
@@ -66,13 +59,12 @@ def read_validating_apr():
         }
     )
 
-    staked = map_query["TotalStake"]
     delegation_fee = standard_query["FloorDelegationFee"]
     founder_fee = standard_query["FloorFounderShare"]
     fee = delegation_fee + founder_fee
     fee_to_float = fee / 100
 
-    total_staked_tokens = from_nano(sum(staked.values()))
+    total_staked_tokens = from_nano(client.get_total_stake())
 
     # 50% of the total emission goes to stakers
     daily_token_rewards = blocks_in_a_day * from_nano(unit_emission) / 2
