@@ -50,6 +50,12 @@ def read_validating_apr():
 
     unit_emission = client.get_unit_emission()
 
+    # remove emission that are not flowing to circulation
+    subnet_emission = client.query_map_subnet_emission()
+    recycled_emission = subnet_emission[0]
+    treasury_emission = subnet_emission[1]
+    total_emission = unit_emission - (recycled_emission + treasury_emission)
+
     standard_query = client.query_batch(
         {
             "SubspaceModule": [
@@ -67,7 +73,7 @@ def read_validating_apr():
     total_staked_tokens = from_nano(client.get_total_stake())
 
     # 50% of the total emission goes to stakers
-    daily_token_rewards = blocks_in_a_day * from_nano(unit_emission) / 2
+    daily_token_rewards = blocks_in_a_day * from_nano(total_emission) / 2
     _apr = (daily_token_rewards * (1 - fee_to_float)
             * 365) / total_staked_tokens * 100
 
