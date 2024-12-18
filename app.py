@@ -9,8 +9,7 @@ from math import ceil
 
 app = FastAPI()
 
-node_url = "wss://commune-api-node-2.communeai.net"
-
+node_url = "wss://api.communeai.net"
 
 @app.get("/")
 def read_root():
